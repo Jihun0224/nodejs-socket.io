@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        @import url(https://fonts.googleapis.com/css?family=Lato:400,700);
+
+        *,
+        *:before,
+        *:after {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #C5DDEB;
+            font: 14px/20px "Lato", Arial, sans-serif;
+            padding: 40px 0;
+            color: white;
+        }
+
+        .container {
+            margin: 0 auto;
+            width: 750px;
+            background: #444753;
+            border-radius: 5px;
+        }
+
+        .people-list {
+            width: 260px;
+            float: left;
+        }
+
+        .people-list input {
+            border-radius: 3px;
+            border: none;
+            padding: 14px;
+            color: white;
+            background: #6A6C75;
+            width: 90%;
+            font-size: 14px;
+        }
+
+        .people-list ul {
+            padding: 20px;
+            height: 770px;
+        }
+
+        .people-list ul li {
+            padding-bottom: 20px;
+        }
+
+        .chat {
+            width: 490px;
+            float: left;
+            background: #F2F5F8;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            color: #434651;
+        }
+
+        .chat .chat-header {
+            padding: 20px;
+            border-bottom: 2px solid white;
+        }
+
+        .chat .chat-header img {
+            float: left;
+        }
+
+        .chat .chat-history {
+            padding: 30px 30px 20px;
+            border-bottom: 2px solid white;
+            overflow-y: scroll;
+            height: 670px;
+        }
+
+        .chat .chat-history .message-data {
+            margin-bottom: 15px;
+        }
+
+        .chat .chat-history .message-data-time {
+            color: #a8aab1;
+            padding-left: 6px;
+        }
+
+        .chat .chat-history .message {
+            color: white;
+            padding: 18px 20px;
+            line-height: 26px;
+            font-size: 16px;
+            border-radius: 7px;
+            margin-bottom: 30px;
+            width: 90%;
+            position: relative;
+        }
+
+        .chat .chat-history .message:after {
+            bottom: 100%;
+            left: 7%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+            border-bottom-color: #86BB71;
+            border-width: 10px;
+            margin-left: -10px;
+        }
+
+        .chat .chat-history .my-message {
+            background: #86BB71;
+        }
+
+        .chat .chat-history .other-message {
+            background: #94C2ED;
+        }
+
+        .chat .chat-history .other-message:after {
+            border-bottom-color: #94C2ED;
+            left: 93%;
+        }
+
+        .chat .chat-message {
+            padding: 30px;
+        }
+
+        .chat .chat-message textarea {
+            width: 100%;
+            border: none;
+            padding: 10px 20px;
+            font: 14px/22px "Lato", Arial, sans-serif;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        .chat .chat-message .fa-file-o,
+        .chat .chat-message .fa-file-image-o {
+            font-size: 16px;
+            color: gray;
+            cursor: pointer;
+        }
+
+        .chat .chat-message button {
+            float: right;
+            color: #94C2ED;
+            font-size: 16px;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            background: #F2F5F8;
+        }
+
+        .chat .chat-message button:hover {
+            color: #75b1e8;
+        }
+
+        .chat .chat-message .exit {
+            float: left;
+            color: #dc6f6f;
+        }
+
+        .chat .chat-message .exit:hover {
+            color: #d33636;
+        }
+
+        .online,
+        .offline,
+        .me {
+            margin-right: 3px;
+            font-size: 10px;
+        }
+
+        .me {
+            color: #94C2ED;
+        }
+
+        .align-left {
+            text-align: left;
+        }
+
+        .align-right {
+            text-align: right;
+        }
+
+        .float-right {
+            float: right;
+        }
+
+        .clearfix:after {
+            visibility: hidden;
+            display: block;
+            font-size: 0;
+            content: " ";
+            clear: both;
+            height: 0;
+        }
+
+        .people-list h1 {
+            text-align: center;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0px;
+        }
+
+        .Broadcast {
+            font-size: 20px;
+            text-align: center;
+            color: #75b1e8;
+        }
+
+        #setNickname {
+            background-color: #94C2ED;
+            width: 302px;
+            border: 0;
+            padding: 10px 0;
+            margin: 5px 0;
+            text-align: center;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #nickName {
+            background-color: #4F6877;
+            border: 0;
+            color: #fff;
+            left: 0px;
+            width: 300px;
+            height: 30px;
+        }
+
+        .login-page {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 50px;
+            width: 300px;
+            left: 30%;
+        }
+
+        .input-nickname {
+            width: 300px;
+        }
+
+        .title {
+            width: 400px;
+            font-size: 30px;
+        }
+
+        #chat-section {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <section id="nickName-section">
+        <div class="login-page">
+            <div class="input-nickname">
+                <h2 class="title">What's your nickname?</h2>
+                <input id="nickName" class="nickName" name='nickName' type="text" maxlength="14" />
+                <button id="setNickname">
+                    ENTER
+                </button>
+            </div>
+        </div>
+    </section>
+    <section id="chat-section">
+        <div class="container clearfix">
+            <div class="people-list" id="people-list">
+                <h1>현재 접속자</h1>
+                <ul class="userList" id="userList"></ul>
+            </div>
+            <div class="chat">
+                <div class="chat-history">
+                    <ul></ul>
+                </div>
+                <div class="chat-message clearfix">
+                    <textarea name="message-to-send" id="message-to-send" placeholder="Type your message"
+                        rows="3"></textarea>
+                    <button class="exit" id="exit">Exit</button>
+                    <button class="send" type="submit">Send</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="https://twitter.github.io/typeahead.js/js/handlebars.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script id="message-template" type="text/x-handlebars-template">
+        <li class="clearfix">
+          <div class="message-data align-right">
+            <span class="message-data-time" >{{time}}</span> &nbsp; &nbsp;
+            <span class="message-data-name" >{{nickName}}</span> 
+          </div>
+          <div class="message other-message float-right">
+            {{messageOutput}}
+          </div>
+        </li>
+      </script>
+
+    <script id="message-response-template" type="text/x-handlebars-template">
+        <li>
+            <div class="message-data">
+                <span class="message-data-name" >{{nickName}}</span> 
+                <span class="message-data-time" >{{time}}</span> &nbsp; &nbsp;
+            </div>
+              <div class="message my-message">
+                {{messageOutput}}             
+             </div>
+
+        </li>
+      </script>
+    <script>
+        var socket = io();
+        function scrollToBottom() {
+            this.$chatHistory.scrollTop(this.$chatHistory[0].scrollHeight);
+        }
+        $("#setNickname").on("click", function () {
+            if ($("#nickName").val() != "") {
+                var nickName = $("#nickName").val()
+                sessionStorage.setItem("nickName", nickName)
+                socket.emit('join', nickName);
+                $("#nickName-section").hide()
+                $("#chat-section").show()
+            }
+            else {
+                alert("닉네임을 입력해주세요")
+            }
+        })
+
+        $("#exit").on("click", function () {
+            socket.on('exit', sessionStorage.setItem("nickName", nickName))
+            sessionStorage.clear()
+            window.location.reload()
+        })
+
+        // 유저리스트 업데이트
+        function updateUserList(userList) {
+            $(".userList").text('');
+            userList.map((name) => {
+                $(".userList").append($("<h2>").text(name))
+            })
+        }
+
+        //수신: 환영인사
+        socket.on("welcome", (data) => {
+            updateUserList(data.userList)
+            $(".chat-history ul").append($('<li class="Broadcast">').text(sessionStorage.getItem("nickName") + '님 환영합니다.'))
+            scrollToBottom()
+        })
+        //수신: 신규자 접속
+        socket.on("join", (data) => {
+            $(".chat-history ul").append($('<li class="Broadcast">').text(data.nickName + '님이 입장하셨습니다.'))
+            updateUserList(data.userList)
+            scrollToBottom()
+        })
+        // 수신 퇴장
+        socket.on('exit', (data) => {
+            $(".chat-history ul").append($('<li class="Broadcast">').text(data.nickName + '님이 퇴장하셨습니다.'))
+            updateUserList(data.userList)
+            scrollToBottom()
+        })
+        //송신 메시지
+        $('.send').click(() => {
+            socket.emit('chat message', {
+                msg: $('#message-to-send').val(),
+                nickName: sessionStorage.getItem("nickName")
+            })
+            $('#message-to-send').val('')
+            scrollToBottom()
+        })
+        //수신 메시지
+        socket.on('chat message', (data) => {
+            this.$chatHistory = $('.chat-history');
+            this.$chatHistoryList = this.$chatHistory.find('ul');
+            var template;
+            var nickName = sessionStorage.getItem("nickName")
+            console.log(nickName + " " + data.nickName);
+            if (data.nickName == nickName) {
+                template = Handlebars.compile($("#message-template").html());
+            }
+            else {
+                template = Handlebars.compile($("#message-response-template").html());
+            }
+            var today = new Date();
+            var context = {
+                nickName: data.nickName,
+                messageOutput: data.msg,
+                time: today.toLocaleDateString() + " " + today.toLocaleTimeString()
+            };
+            this.$chatHistoryList.append(template(context));
+            scrollToBottom()
+        })
+
+    </script>
+
+</body>
+
+</html>
